@@ -1,0 +1,34 @@
+{
+    "navigator": {
+        "brand": "ETHEARN",
+        "connect": "CONECTAR",
+        "account":{
+            "link":"Véalo en el explorador",
+            "copy":"Copiar al portapapeles"
+        }
+    },
+
+    "sidebar":{
+        "loop": {
+            "label":"LOOP",
+            "tooltip":"Bucle y gane" 
+        },
+        "swap": {
+            "label":"INTERCAMBIO" ,
+            "tooltip":"Intercambiar y ganar" 
+        },
+        "liquidity": {
+            "label":"LIQUIDEZ" ,
+            "tooltip":"Crea tu liquidez" 
+        },
+        "nft": {
+            "label":"NFT" ,
+            "tooltip":"Tu parte del bucle" 
+        }
+
+    },
+    "warning":{
+
+        "testnet":"Actualmente estás conectado a "
+    }
+}

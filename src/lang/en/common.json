@@ -1,0 +1,36 @@
+{
+    "navigator": {
+        "brand": "ETHEARN",
+        "connect": "CONNECT",
+        "account":{
+            "link":"See it on the explorer",
+            "copy":"Copy to clipboard"
+        }
+    },
+
+    "sidebar":{
+        "loop": {
+            "label":"LOOP",
+            "tooltip":"Loop and Earn" 
+        },
+        "swap": {
+            "label":"SWAP" ,
+            "tooltip":"Swap and Earn" 
+        },
+        "liquidity": {
+            "label":"LIQUIDITY" ,
+            "tooltip":"Create your Liquidity" 
+        },
+        "nft": {
+            "label":"NFT" ,
+            "tooltip":"Your Share of the Loop" 
+        }
+    },
+
+
+    "warning":{
+
+        "testnet":"You are curently connected to "
+    }
+
+}

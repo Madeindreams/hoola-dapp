@@ -1,0 +1,36 @@
+{
+    "navigator": {
+        "brand": "ETHEARN",
+        "connect": "CONNEXION",
+        "account":{
+            "link":"Vers l'explorateur de bloque",
+            "copy":"Copier dans le presse-papier"
+        }
+    },
+
+    "sidebar":{
+        "loop": {
+            "label":"LOOP",
+            "tooltip":"Loop et gagne" 
+        },
+        "swap": {
+            "label":"ÉCHANGE" ,
+            "tooltip":"Swap et gagne" 
+        },
+        "liquidity": {
+            "label":"LIQUIDITÉ" ,
+            "tooltip":"Créer une position" 
+        },
+        "nft": {
+            "label":"NFT" ,
+            "tooltip":"Votre part du protocol" 
+        }
+
+    },
+
+
+    "warning":{
+
+        "testnet":"Vouns êtes présentement connecté sur "
+    }
+}
