@@ -1,5 +1,5 @@
 {
-  "name": "ethearn-dapp",
+  "name": "hoola-dapp",
   "version": "1.0.0",
   "description": "MoneyHack2021 Hackathon project",
   "main": "index.js",
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Madeindreams/ethearn-dapp.git"
+    "url": "git+https://github.com/hoola-eth/hoola-dapp"
   },
   "keywords": [
     "DEFI"
@@ -21,7 +21,7 @@
   "author": "Ian Decantralize",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Madeindreams/ethearn-dapp/issues"
+    "url": "https://github.com/hoola-eth/hoola-dapp/issues"
   },
   "homepage": "./",
   "dependencies": {
