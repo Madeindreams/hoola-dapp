@@ -2,7 +2,7 @@
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import Web3 from "web3";
 import { SafeAppWeb3Modal } from '@gnosis.pm/safe-apps-web3modal';
-import { userAmountToWei, stringToFloat } from "../utils/Balances";
+import { userAmountToWei, stringToFloat, weiToFloat } from "../utils/Balances";
 import { ERC20 } from "../utils/ERC20Lib";
 import {
   loadWeb3,
@@ -23,23 +23,26 @@ import {
   loopOutAssetSelected,
   loopInAmountChanged,
   loopOutAmountChanged,
+  tempSequence,
+  insertSequence
+  
 } from './actions'
 
 import ensReverseABI from '../abis/ensReverse.json'
 // import erc20 from '../abis/erc20.json' // for balances
 import ethearn from '../abis/ethearn.json'
-import { RiContrastDropLine } from "react-icons/ri";
+
 
 
 let PROVIDER
 let ACCOUNT = []
-let ETHEARN_ADDRESS = "0xb007167714e2940013EC3bb551584130B7497E22"
+let ETHEARN_ADDRESS = "0xd6e1afe5cA8D00A2EFC01B89997abE2De47fdfAf"
 let ETHEARN
 let WEB3
 
 const ETH = "0x0000000000000000000000000000000000000000";
 const DAI = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
-
+const USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
 export const loadEthereum = async (dispatch) => {
   const providerOptions = {
     walletconnect: {
@@ -178,13 +181,58 @@ export const mintNft = async (dispatch) => {
  *  previous socket.
  *  */
 
-export const loopInAmountChange = async (dispatch, amount, assetIn, assetOut ,orderBook) => {
+export const loopInAmountChange = async (dispatch, amount, assetIn, assetOut, orderBook) => {
   let socketSequence = [] // {id:orderId, amount:amountToFill}
+  let leftToFill  = amount *1// the amount left to fill
+  let cumulatedPrice = 0 // the overall cost
+  let availableLiquidity = 0
   console.log('LoopInAmountChanged', amount)
-
-
- console.log(orderBook)
   
+ console.log('loopInOrderBook',orderBook)
+
+  let i = 0
+  // for each order
+  for (i = 0; i < orderBook.length; i++) {
+   // console.log(orderBook[i].creatorAmount,orderBook[i].price)
+    //console.log(weiToFloat(orderBook[i].creatorAmount,ERC20[orderBook[i].creatorAsset].decimals))
+    console.log('LEFT TO FILL',leftToFill)
+    //if the amount requested is smaller or equal to the first order encountered
+    if (leftToFill <= weiToFloat(orderBook[i].askingAmount,ERC20[orderBook[i].askingAsset].decimals) && orderBook[i].askingAsset === assetIn && orderBook[i].creatorAsset === assetOut) {
+      availableLiquidity = availableLiquidity + weiToFloat(orderBook[i].askingAmount,ERC20[orderBook[i].askingAsset].decimals) * 1
+      socketSequence.push( { 
+        id : orderBook[i].id, 
+        amount : userAmountToWei(leftToFill,ERC20[orderBook[i].askingAsset].decimals),
+        askingAsset : ERC20[orderBook[i].askingAsset],
+        creatorAsset : ERC20[orderBook[i].creatorAsset],
+        price : orderBook[i].price * leftToFill
+      })
+      cumulatedPrice +=  leftToFill * orderBook[i].price
+      dispatch(loopInAmountChanged(amount))
+      dispatch(loopOutAmountChanged(cumulatedPrice))
+      console.log('SEQUENCE', socketSequence)
+      dispatch(tempSequence(socketSequence))
+      return
+      // otherwise we need more order we still fill this one but keep going
+    }else if(leftToFill > weiToFloat(orderBook[i].askingAmount,ERC20[orderBook[i].askingAsset].decimals) && orderBook[i].askingAsset === assetIn && orderBook[i].creatorAsset === assetOut ){
+      console.log('Filling More')
+      availableLiquidity = availableLiquidity + weiToFloat(orderBook[i].askingAmount,ERC20[orderBook[i].askingAsset].decimals) * 1
+      socketSequence.push( { 
+        id:orderBook[i].id, 
+        amount: orderBook[i].askingAmount,
+        askingAsset : ERC20[orderBook[i].askingAsset],
+        creatorAsset: ERC20[orderBook[i].creatorAsset],
+        price : orderBook[i].price * weiToFloat(orderBook[i].askingAmount,ERC20[orderBook[i].askingAsset].decimals)
+      })
+      leftToFill -= weiToFloat(orderBook[i].askingAmount,ERC20[orderBook[i].askingAsset].decimals)
+      cumulatedPrice +=  weiToFloat(orderBook[i].askingAmount,ERC20[orderBook[i].askingAsset].decimals) * orderBook[i].price
+      console.log('Amount Left to fill',leftToFill)
+    }
+
+  }
+    // if we make it here it's because ther is not enough liquidity.
+    console.log('BUSTED',availableLiquidity )
+    console.log('SEQUENCE', socketSequence)
+    dispatch(tempSequence(socketSequence))
   //when the loppIn Amount change we ajust the loop out amount
   //when the loopIn asset chnages the amount will reset.
   
@@ -192,8 +240,8 @@ export const loopInAmountChange = async (dispatch, amount, assetIn, assetOut ,or
   // this wil return the best price for his amount + skippage
 
   // dispatch the loopOutAmountChange
-  dispatch(loopInAmountChanged(amount))
-  dispatch(loopOutAmountChanged(amount * 1800))
+  dispatch(loopInAmountChanged(availableLiquidity))
+  dispatch(loopOutAmountChanged(cumulatedPrice))
   // when the loopOut amount changed we reverse it and tell the user what he needs IN for this exact amount out
 
   //dipatch transaction done effect
@@ -227,12 +275,41 @@ export const loopOutAmountChange = async (dispatch, amount) => {
  * @param {*} dispatch 
  */
 
-export const insertInLoop = async (dispatch) => {
+export const insertInLoop = async (dispatch,tempSequence) => {
 
-  console.log('INSERT IN LOOP')
+
+  console.log('INSERT IN LOOP', tempSequence)
   // we insert the order id's to fill with the amount on each one.
-
+ dispatch(insertSequence(tempSequence))
   //dipatch transaction done effect
+}
+
+
+
+
+export const sequenceBuilder = async (dispatch, sequence) =>{
+
+  console.log('LOOPING ',sequence)
+
+   let ids = []
+   let amounts = []
+   let i = 0
+   let orderCount = 0
+   for(i=0;i<sequence.length;i++){
+    let x = 0
+    for(x=0;x<sequence[i].length;x++){
+      orderCount++
+      ids.push(sequence[i][x].id)
+      amounts.push(sequence[i][x].amount)
+
+    }
+
+   }
+
+   console.log(ids,amounts,orderCount)
+   let tx = await ETHEARN.methods.loop(ids,amounts,orderCount,true,1,'150000000',USDC).send({from:ACCOUNT.address})
+
+   console.log('TX', tx)
 }
 
 
@@ -243,9 +320,10 @@ export const insertInLoop = async (dispatch) => {
  *  This is where we construct the call the run the loop in EthEarn
  * 
  *  */
-export const loopSequence = async (dispatch) => {
+export const loopSequence = async (dispatch,sequence) => {
   //dispatch pending transaction effect
-  console.log('LOOPING')
+  console.log('LOOPING ',sequence)
+  
   //create the transaction
 
   //dipatch transaction done effect

@@ -180,8 +180,20 @@ export function loopSetDefault() {
     }
 }
 
+export function tempSequence(sequenceTemp) {
+    return {
+        type: 'SEQUENCE_TEMP',
+        sequenceTemp
+    }
+}
 
 
+export function insertSequence(sequence) {
+    return {
+        type: 'SEQUENCE_INSERT',
+        sequence
+    }
+}
 
 
 

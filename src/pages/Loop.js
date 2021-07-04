@@ -9,6 +9,7 @@ import { FaInfinity } from "react-icons/fa";
 import { useTranslation } from 'react-i18next';
 import EthBalance from "../components/EthBalance"
 import { ERC20 } from "../utils/ERC20Lib";
+import { userAmountToWei, stringToFloat, weiToFloat } from "../utils/Balances";
 import {
   loopInAmountSelector,
   loopOutAmountSelector,
@@ -19,54 +20,134 @@ import {
   loopOutSelector,
   loopAssetDropSelector,
   loopDefaultAssetSelector,
-  orderBookDataSelector
+  orderBookDataSelector,
+  loopTempSequenceSelector,
+  loopSequenceSelector,
+  sequenceSelector
 } from "../store/selectors";
 import {
   assetDropdown,
   loopInAssetSelected,
   loopOutAssetSelected,
-  loopAssetInserted
+  loopAssetInserted,
+  tempSequence
 } from "../store/actions"
 import {
   insertInLoop,
-  loopSequence,
+  sequenceBuilder,
   loadLoopDefaultAssets,
   loopInAmountChange,
   loopOutAmountChange,
   loadLiquidity
 } from "../store/interactions"
 
+
+
+const Sequence = (data) =>{
+ console.log('SEQUENCE',data )
+ return(
+  <LiquidityRow key={data.id}>
+  <SequenceID>
+  {data.id}
+    </SequenceID>
+ <SequenceOrder>
+<SequenceIn>
+  {weiToFloat(data.amount,ERC20[data.askingAsset.address].decimals)} 
+  <SequenceInAssetLogo src={`./assets/erc20logo/${ERC20[data.askingAsset.address].symbol}.svg`}/>
+  </SequenceIn>
+  <SequenceOut>
+  <SequenceOutAssetLogo src={`./assets/erc20logo/${ERC20[data.creatorAsset.address].symbol}.svg`}/>
+  {data.price.toFixed(2)}
+  </SequenceOut>
+ </SequenceOrder>
+  </LiquidityRow>
+  )
+}
+const SequenceInAssetLogo = styled.img`
+height:35px;
+float:left;
+`;
+const SequenceOutAssetLogo = styled.img`
+height:35px;
+float:right;
+`;
+const SequenceID = styled.div`
+position:relative;
+text-align:left;
+width:100%;
+font-size:12px;
+`;
+
+const SequenceOrder = styled.div`
+position:relative;
+height:35px;
+width:100%;
+`;
+
+const SequenceIn = styled.div`
+text-align:left;
+float:left;
+width:49%;
+`;
+const SequenceOut = styled.div`
+text-align:right;
+float:right;
+width:49%;
+`;
+
+
+
+
+
+
+const Sequencer = (props, data, i) => {
+  //const { dispatch, loopSequence } = props
+  console.log('SEQUENCER DATA ', data)
+  return (
+    <div key={i}>
+      {data.map((sequence) => Sequence(sequence))}
+      
+    </div>
+  )
+}
+
+
+
+
 const Liquidity = (props) => {
-  const { dispatch, accountData } = props
+  const { dispatch, accountData, sequence, loopSequence } = props
   return (
 
-    <LiquidityRow>
+    <div>
       {EthBalance(accountData.balance, 18)}
-      <OrderCreatorRow>
-
-      </OrderCreatorRow>
-      <OrderCreatorRow>
-        <LaunchLoopButton />
-      </OrderCreatorRow>
-    </LiquidityRow>
+    
+        {sequence ? loopSequence.map((data, i) => Sequencer(props, data, i)) : "NO SEQUENCE"}
+        <LiquidityRow>
+      {LaunchLoopButton(props)}
+      </LiquidityRow>
+    </div>
   )
 }
 
 const LiquidityRow = styled.div`
+position:relative;
 text-align:center;
+
+width:100%;
+
 `;
 
 
 
 const LaunchLoopButton = (props) => {
-  const { dispatch, t } = props
+  const { dispatch, t ,loopSequence} = props
   const icon = () => {
     return <FaInfinity />;
   };
   return (
     <ButtonsOutline
       action={(e) => {
-        loopSequence(dispatch)
+        sequenceBuilder(dispatch,loopSequence)
       }}
       message='LOOP'
       icon={icon}
@@ -77,14 +158,14 @@ const LaunchLoopButton = (props) => {
 }
 
 const InsertButton = (props) => {
-  const { dispatch, t } = props
+  const { dispatch, t ,tempSequence} = props
   const icon = () => {
     return <FaInfinity />;
   };
   return (
     <ButtonsOutline
       action={(e) => {
-        insertInLoop(dispatch)
+        insertInLoop(dispatch,tempSequence)
       }}
       message='INSERT'
       icon={icon}
@@ -126,7 +207,7 @@ const Creator = (props) => {
 
       <OrderCreatorRow></OrderCreatorRow>
       <OrderCreatorRow>
-        <InsertButton />
+        {InsertButton(props)}
       </OrderCreatorRow>
     </LoopCreator>
   )
@@ -179,6 +260,7 @@ position:relative;
 text-align:center;
 height:50px;
 width:100%;
+
 `;
 const AssetsWrapper = styled.div`
 position:relative;
@@ -250,6 +332,9 @@ const Order = () => {
   const accountData = useSelector(accountDataSelector);
   const defaultAsset = useSelector(loopDefaultAssetSelector);
   const orderBook = useSelector(orderBookDataSelector);
+  const tempSequence = useSelector(loopTempSequenceSelector);
+  const sequence = useSelector(sequenceSelector);
+  const loopSequence = useSelector(loopSequenceSelector);
   const { t } = useTranslation('common');
 
   const props = {
@@ -264,7 +349,10 @@ const Order = () => {
     assetDrop,
     defaultAsset,
     accountData,
-    orderBook
+    orderBook,
+    tempSequence,
+    sequence,
+    loopSequence
   };
 
   useEffect(async () => {

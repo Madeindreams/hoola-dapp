@@ -122,6 +122,13 @@ function loop(state = {}, action) {
             return { ...state, default: true}
         case 'ASSET_DROP':
             return { ...state, side: action.side}
+        case 'SEQUENCE_TEMP':
+            return { ...state, sequenceTemp: action.sequenceTemp}
+        case 'SEQUENCE_INSERT':
+             return { ...state, 
+                    loaded:true,
+                    sequence: [...(state.sequence || []), action.sequence],
+                    sequenceTemp: null}
         default:
             return state
     }
